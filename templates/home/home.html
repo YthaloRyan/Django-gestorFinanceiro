@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{%block head%}
+    <h1>Home</h1>
+{% endblock %}
+
+{% block content %}
+    <p>Welcome to the home page {{ username }}!</p>
+
+
+    <div>
+        <select id="month-filter">
+            <option value="">Todos os meses</option>
+            <option value="1">Janeiro</option>
+            <option value="2">Fevereiro</option>
+            <option value="3">Março</option>
+            <option value="4">Abril</option>
+            <option value="5">Maio</option>
+            <option value="6">Junho</option>
+            <option value="7">Julho</option>
+            <option value="8">Agosto</option>
+            <option value="9">Setembro</option>
+            <option value="10">Outubro</option>
+            <option value="11">Novembro</option>
+            <option value="12">Dezembro</option>
+        </select>
+
+        <select id="year-filter"></select>
+
+    </div>
+    
+
+    <div id="transactions-list"></div>
+
+    
+
+    <form id="transaction-form">
+        <input type="text" id="description" placeholder="Descrição" required>
+        <input type="number" id="amount" step="0.01" min="0.01" placeholder="Valor" required>
+        <select id="type">
+            <option value="IN">Entrada</option>
+            <option value="OUT">Saída</option>
+        </select>
+        <select id="transaction-category"></select>
+        <input type="date" id="date" required>
+        <button type="submit">Adicionar</button>
+    </form>
+
+    <div id="categories-list">
+        <form id="category-form">
+            <input type="text" id="category-name" placeholder="Categoria" required>
+            <button type="submit">Adicionar</button>
+        </form>
+
+        <form id="category-delete-form">
+            <select id="category-delete" required></select>
+            <button type="submit">Excluir</button>
+        </form>
+        
+    </div>
+    
+
+
+
+
+
+
+
+    <script src="{% static 'csrf.js' %}"></script>
+    <script src="{% static 'api/js/transactions.js' %}"></script>
+    <script src="{% static 'api/js/categories.js' %}"></script>
+
+
+    <a href="/accounts/logout/">Exit</a>
+{% endblock %}
