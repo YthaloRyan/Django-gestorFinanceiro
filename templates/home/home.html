@@ -10,6 +10,20 @@
 
 
     <div>
+        <div>
+            <h3>Saldo acumulado</h3>
+            <p id="accumulated-balance">R$ 0.00</p>
+        </div>
+        <div>
+            <h3>Entradas</h3>
+            <p id="month-income">R$ 0.00</p>
+        </div>
+        <div>
+            <h3> Saídas</h3>
+            <p id="month-outcome">R$ 0.00</p>
+        </div>
+        </div>
+    <div>
         <select id="month-filter">
             <option value="">Todos os meses</option>
             <option value="1">Janeiro</option>
@@ -57,8 +71,9 @@
         <form id="category-delete/edit-form">
             <select id="category-delete" required></select>
             <input type="text" id="category-edit-name" placeholder="Editar">
-            <button type="submit" id="delete-category-button">Excluir</button>
             <button type="submit" id="edit-category-button">Editar</button>
+            <button type="submit" id="delete-category-button">Excluir</button>
+            
             
         </form>
         
