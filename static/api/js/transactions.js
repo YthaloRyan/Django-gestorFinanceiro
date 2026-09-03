@@ -19,7 +19,7 @@ async function loadTransactions() {
         item.classList.add('transaction-item');
         item.innerHTML = `
             <span>${t.date}</span>
-            <span>${t.category}</span>
+            <span>${document.querySelector(`#transaction-category option[value="${t.category}"]`)?.textContent || ''}</span>
             <span>${t.description}</span>
             <span>${t.type === 'IN' ? '+' : '-'} R$ ${t.amount}</span>
             <button class="btn-delete-transaction" data-id="${t.id}" type="button"> X </button>
@@ -42,14 +42,13 @@ function deleteTransaction(id) {
     fetch(`/api/transactions/${id}/`, {
         method: 'DELETE',
         headers: {
-            'X-CSRFToken': csrftoken // supondo que csrf.js exponha isso
+            'X-CSRFToken': csrftoken
         }
     })
     .then(response => {
         if (response.ok) {
             loadTransactions();
             loadYears();
-            // recarrega a lista, ou remove o item do DOM diretamente
         } else {
             console.error('Erro ao excluir transação');
         }
@@ -101,7 +100,6 @@ document.getElementById('transaction-form').addEventListener('submit', async fun
         date: date_value,
     };
 
-    console.log(data);
 
     const response = await fetch('/api/transactions/', {
         method: 'POST',
@@ -115,7 +113,7 @@ document.getElementById('transaction-form').addEventListener('submit', async fun
     if (response.ok) {
         loadTransactions();
         document.getElementById('amount').value = ''; // mantém a data selecionada
-        document.getElementById('desdescription').value = '';
+        document.getElementById('description').value = '';
     } else {
         const error = await response.json();
         console.error('Erro ao criar transação:', error);
@@ -128,7 +126,7 @@ document.getElementById('month-filter').addEventListener('change', loadTransacti
 document.getElementById('year-filter').addEventListener('change', loadTransactions);
 
 document.addEventListener('DOMContentLoaded', async () => {
-    await loadYears();  // espera popular o select de anos primeiro
+    await loadYears();
 
     const now = new Date();
     document.getElementById('month-filter').value = now.getMonth() + 1;

@@ -22,9 +22,7 @@ async function loadCategories() {
     });
 }
 
-document.getElementById('category-delete-form').addEventListener('submit', async function (e) {
-    e.preventDefault();
-
+async function deleteCategory() {
     const categoryId = document.getElementById('category-delete').value;
 
     const response = await fetch(`/api/categories/${categoryId}/`, {
@@ -34,11 +32,49 @@ document.getElementById('category-delete-form').addEventListener('submit', async
         },
     });
 
+    return response;
+}
+
+async function editCategory() {
+    const categoryId = document.getElementById('category-delete').value;
+    
+    const data = {
+        name: document.getElementById('category-edit-name').value
+    };
+
+    console.log('Dados para edição:', data); // Log para depuração
+    const response = await fetch(`/api/categories/${categoryId}/`, {
+        method: 'PUT',
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    });
+
+    return response;
+}
+
+
+
+document.getElementById('category-delete/edit-form').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    let response = null;
+
+    if (e.submitter.id === 'delete-category-button') {
+        response = await deleteCategory();
+    } else if (e.submitter.id === 'edit-category-button') {
+        response = await editCategory();
+    }
+
+    
+
     if (response.ok) {
         loadCategories();
     } else {
-        console.error('Erro ao excluir categoria');
-        alert('Erro ao excluir categoria.');
+        console.error('Erro ao excluir/editar categoria');
+        alert('Erro ao excluir/editar categoria.');
     }
 });
 
