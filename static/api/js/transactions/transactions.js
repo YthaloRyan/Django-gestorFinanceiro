@@ -1,12 +1,9 @@
-async function loadTransactions() {
-    const month = document.getElementById('month-filter').value;
-    const year = document.getElementById('year-filter').value;
+import { dateParams, createButton, createSpan } from '/static/api/js/utils.js';
 
+async function loadTransactions() {
+    // request transactions with date parameters
     let url = '/api/transactions/';
-    const params = [];
-    if (month) params.push(`month=${month}`);
-    if (year) params.push(`year=${year}`);
-    if (params.length) url += `?${params.join('&')}`;
+    url = dateParams(url);
 
     const response = await fetch(url);
     const transactions = await response.json();
@@ -14,52 +11,63 @@ async function loadTransactions() {
     const container = document.getElementById('transactions-list');
     container.innerHTML = '';
 
-    
+    // create a map of category ids to names for easy lookup
+    const categoryMap = new Map(
+        [...document.querySelectorAll('#transaction-category option')]
+            .map(opt => [opt.value, opt.textContent])
+    );
 
+    const fragment = document.createDocumentFragment();
+
+    // iterate over transactions and create elements for each
     transactions.forEach(t => {
-
-        console.log(t.amount)
         const amount = Number(t.amount).toLocaleString('pt-BR', {
             style: 'currency',
             currency: 'BRL'
         });
 
-        console.log(amount); // Log para depuração
-
         const item = document.createElement('div');
+
         item.classList.add('transaction-item');
-        item.innerHTML = `
-            <span>${t.date}</span>
-            <span>${document.querySelector(`#transaction-category option[value="${t.category}"]`)?.textContent || ''}</span>
-            <span>${t.description}</span>
-            <span>${t.type === 'IN' ? '+' : '-'} ${amount}</span>
-            <button class="btn-edit-transaction" data-id="${t.id}" type="button"> E </button>
-            <button class="btn-delete-transaction" data-id="${t.id}" type="button"> X </button>
-        `;
-        container.appendChild(item);
+        
+        // add data attributes for easy access later
+        item.append(
+            createSpan(t.date),
+            createSpan(categoryMap.get(t.category) || ''),
+            createSpan(t.description),
+            createSpan(`${t.type === 'IN' ? '+' : '-'} ${amount}`)
+        );
+
+        const btnEdit = createButton('E', 'btn-edit-transaction', t.id);
+        const btnDelete = createButton('X', 'btn-delete-transaction', t.id);
+        item.append(btnEdit, btnDelete);
+
+        fragment.appendChild(item);
     });
 
-    document.querySelectorAll('.btn-delete-transaction').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const id = e.target.dataset.id;
-            deleteTransaction(id);
-        });
-    });
-
-
+    container.appendChild(fragment);
 }
 
+// event delegation for edit and delete buttons
+document.getElementById('transactions-list').addEventListener('click', (e) => {
+    const deleteBtn = e.target.closest('.btn-delete-transaction');
+    if (deleteBtn) {
+        deleteTransaction(deleteBtn.dataset.id);
+        return;
+    }
+
+    const editBtn = e.target.closest('.btn-edit-transaction');
+    if (editBtn) {
+        editTransaction(editBtn.dataset.id);
+    }
+});
+
+
+
 async function accumulatedBalance() {
-    const month = document.getElementById('month-filter').value;
-    const year = document.getElementById('year-filter').value;
-
-
     let url = '/api/transactions/accumulated_balance/';
-    const params = [];
-    params.push(`month=${month}`);
-    params.push(`year=${year}`);
-    if (params.length) url += `?${params.join('&')}`;
 
+    url = dateParams(url);
 
     const response = await fetch(url);
     let balance = await response.json();
@@ -93,14 +101,13 @@ function monthIncomeAndOutcome() {
 
         
         if (operator === '+') {
-            console.log('Income amount:', amount); // Log para depuração
             income += amount;
         } else {
             outcome += amount;
         }
     });
 
-    console.log(`Income:   ${income}, Outcome: ${outcome}`); // Log para depuração
+    
 
 
     income = income.toLocaleString('pt-BR', {
@@ -176,7 +183,7 @@ document.getElementById('transaction-form').addEventListener('submit', async fun
         return;
     }
 
-    console.log('Amount to be sent:', amount); // Log para depuração
+    
 
     const date_value = document.getElementById('date').value;
 

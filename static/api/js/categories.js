@@ -1,3 +1,5 @@
+
+
 async function loadCategories() {
     const response = await fetch('/api/categories/');
 
