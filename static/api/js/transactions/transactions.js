@@ -1,12 +1,12 @@
 import { dateParams, createButton, createSpan } from '/static/api/js/utils.js';
+import { httpGet, httpDelete } from '/static/js/utils.js';
 
 async function loadTransactions() {
     // request transactions with date parameters
     let url = '/api/transactions/';
     url = dateParams(url);
 
-    const response = await fetch(url);
-    const transactions = await response.json();
+    const transactions = await httpGet(url);
 
     const container = document.getElementById('transactions-list');
     container.innerHTML = '';
@@ -14,17 +14,16 @@ async function loadTransactions() {
     // create a map of category ids to names for easy lookup
     const categoryMap = new Map(
         [...document.querySelectorAll('#transaction-category option')]
-            .map(opt => [opt.value, opt.textContent])
+            .map(opt => [Number(opt.value), opt.textContent])
     );
+
+    
 
     const fragment = document.createDocumentFragment();
 
     // iterate over transactions and create elements for each
     transactions.forEach(t => {
-        const amount = Number(t.amount).toLocaleString('pt-BR', {
-            style: 'currency',
-            currency: 'BRL'
-        });
+        const amount = floatToCurrency(t.amount);
 
         const item = document.createElement('div');
 
@@ -32,10 +31,10 @@ async function loadTransactions() {
         
         // add data attributes for easy access later
         item.append(
-            createSpan(t.date),
-            createSpan(categoryMap.get(t.category) || ''),
-            createSpan(t.description),
-            createSpan(`${t.type === 'IN' ? '+' : '-'} ${amount}`)
+            createSpan(`${t.date}`),
+            createSpan(`[${categoryMap.get(t.category) || ''}]`),
+            createSpan(`${t.description}`),
+            createSpan(`[${t.type === 'IN' ? '+' : '-'} ${amount}]`)
         );
 
         const btnEdit = createButton('E', 'btn-edit-transaction', t.id);
@@ -58,30 +57,25 @@ document.getElementById('transactions-list').addEventListener('click', (e) => {
 
     const editBtn = e.target.closest('.btn-edit-transaction');
     if (editBtn) {
-        editTransaction(editBtn.dataset.id);
+        editTransaction(editBtn.dataset.id); 
     }
 });
 
 
-
+// calculate and display accumulated balance based on selected month and year
 async function accumulatedBalance() {
     let url = '/api/transactions/accumulated_balance/';
-
     url = dateParams(url);
 
-    const response = await fetch(url);
-    let balance = await response.json();
-
-    balance = Number(balance).toLocaleString('pt-BR', {
-        style: 'currency',
-        currency: 'BRL'
-    });
+    let balance = await httpGet(url);
+    balance = floatToCurrency(balance);
 
     const container = document.getElementById('accumulated-balance');
     container.textContent = `${balance}`;
 }
 
 
+// calculate and display monthly income and outcome based on selected month and year
 function monthIncomeAndOutcome() {
     let list_transactions = document.getElementById('transactions-list');
     let transactions = list_transactions.querySelectorAll('.transaction-item');
@@ -92,8 +86,8 @@ function monthIncomeAndOutcome() {
         const transaction = t.children[3].textContent.trim();
         
         const amount = parseFloat(
-            transaction.replace(/[^\d,.-]/g, '') // remove tudo que não é dígito, vírgula, ponto ou sinal
-                .replace('.', '').replace(',', '.')        // caso venha com vírgula decimal
+            transaction.replace(/[^\d,.-]/g, '')
+                .replace('.', '').replace(',', '.')
         );
 
         const operator = transaction.charAt(0);
@@ -107,18 +101,9 @@ function monthIncomeAndOutcome() {
         }
     });
 
-    
 
-
-    income = income.toLocaleString('pt-BR', {
-        style: 'currency',
-        currency: 'BRL'
-    });
-
-    outcome = outcome.toLocaleString('pt-BR', {
-        style: 'currency',
-        currency: 'BRL'
-    });
+    income = floatToCurrency(income);
+    outcome = floatToCurrency(outcome);
 
     document.getElementById('month-income').textContent = `${income}`;
     document.getElementById('month-outcome').textContent = `${outcome}`;
@@ -127,19 +112,21 @@ function monthIncomeAndOutcome() {
 
 
 async function deleteTransaction(id) {
-    fetch(`/api/transactions/${id}/`, {
-        method: 'DELETE',
+    await httpDelete(`/api/transactions/${id}/`);
+
+    await updatePage();
+    await loadYears();
+}
+
+
+async function editTransaction(id) {
+    await fetch(`/api/transactions/${id}/`, {
+        method: 'PUT',
         headers: {
-            'X-CSRFToken': csrftoken
-        }
-    })
-    .then(async response => {
-        if (response.ok) {
-            await updatePage();
-            await loadYears();
-        } else {
-            console.error('Erro ao excluir transação');
-        }
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken,
+        },
+        body: JSON.stringify(data),
     });
 }
 
@@ -222,6 +209,13 @@ async function updatePage() {
     await loadTransactions();
     await accumulatedBalance();
     await monthIncomeAndOutcome();
+}
+
+function floatToCurrency(value) {
+    return Number(value).toLocaleString('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+    });
 }
 
 

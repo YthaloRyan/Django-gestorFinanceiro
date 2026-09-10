@@ -19,7 +19,7 @@ async function loadCategories() {
         option.textContent = c.name;
         select.appendChild(option);
 
-        const optionClone = option.cloneNode(true); // agora sim, um clone de verdade
+        const optionClone = option.cloneNode(true);
         select_delete.appendChild(optionClone);
     });
 }
